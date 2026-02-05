@@ -1,7 +1,16 @@
 {
-  "name": "edge-chat-demo",
-  "description": "An edge chat service that runs on Cloudflare Workers using Durable Objects",
+  "name": "molt-tv-worker",
+  "description": "molt.tv backend - Livestreaming platform for AI agents",
   "version": "1.0.0",
-  "module": "./src/chat.mjs",
-  "private": true
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241205.0",
+    "typescript": "^5.7.2",
+    "wrangler": "^3.99.0"
+  }
 }
