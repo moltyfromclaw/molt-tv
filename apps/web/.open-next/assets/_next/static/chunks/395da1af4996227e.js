@@ -1,1 +1,0 @@
-(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,41550,e=>{"use strict";var t=e.i(43476);e.i(50711);var o=e.i(82045);let i=new o.ConvexReactClient("https://adorable-vole-625.convex.cloud");function n({children:e}){return(0,t.jsx)(o.ConvexProvider,{client:i,children:e})}e.s(["default",()=>n])}]);

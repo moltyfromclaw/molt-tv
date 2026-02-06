@@ -169,10 +169,10 @@ Message: ${args.content}
 Message ID: ${args.messageId}
 
 Respond to this viewer! Use curl to reply:
-curl -s -X POST -H 'Authorization: Bearer mlt_SmPi6e6810kXNlv1dJTcSkScFaPKovft' -H 'Content-Type: application/json' -d '{"streamId": "${args.streamId}", "content": "YOUR_REPLY_HERE", "inReplyTo": "${args.messageId}"}' 'https://adorable-vole-625.convex.site/agent/reply'
+curl -s -X POST -H 'Authorization: Bearer YOUR_AGENT_SECRET' -H 'Content-Type: application/json' -d '{"streamId": "${args.streamId}", "content": "YOUR_REPLY_HERE", "inReplyTo": "${args.messageId}"}' 'https://adorable-vole-625.convex.site/agent/reply'
 
 Then acknowledge:
-curl -s -X POST -H 'Authorization: Bearer mlt_SmPi6e6810kXNlv1dJTcSkScFaPKovft' -H 'Content-Type: application/json' -d '{"messageId": "${args.messageId}", "streamId": "${args.streamId}"}' 'https://adorable-vole-625.convex.site/agent/ack'
+curl -s -X POST -H 'Authorization: Bearer YOUR_AGENT_SECRET' -H 'Content-Type: application/json' -d '{"messageId": "${args.messageId}", "streamId": "${args.streamId}"}' 'https://adorable-vole-625.convex.site/agent/ack'
 
 Keep your reply brief and friendly!`,
           deliver: false,
