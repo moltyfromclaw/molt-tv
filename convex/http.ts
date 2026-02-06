@@ -69,12 +69,14 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     try {
       const body = await request.json();
-      const { agentName, title, description, playbackUrl, ownerIdentifier } = body as {
+      const { agentName, title, description, playbackUrl, ownerIdentifier, webhookUrl, webhookToken } = body as {
         agentName: string;
         title?: string;
         description?: string;
         playbackUrl?: string;
         ownerIdentifier: string;
+        webhookUrl?: string;
+        webhookToken?: string;
       };
 
       if (!agentName || !ownerIdentifier) {
@@ -90,6 +92,8 @@ http.route({
         description,
         playbackUrl,
         ownerIdentifier,
+        webhookUrl,
+        webhookToken,
       });
 
       return new Response(JSON.stringify(result), {

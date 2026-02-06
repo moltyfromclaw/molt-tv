@@ -41,6 +41,8 @@ export const register = mutation({
     description: v.optional(v.string()),
     playbackUrl: v.optional(v.string()),
     ownerIdentifier: v.string(), // wallet address, email, or unique ID
+    webhookUrl: v.optional(v.string()), // URL to receive chat notifications
+    webhookToken: v.optional(v.string()), // Bearer token for webhook auth
   },
   handler: async (ctx, args) => {
     // Check if owner already has a stream with this agent name
@@ -79,6 +81,8 @@ export const register = mutation({
       status: "offline",
       ownerUserId: args.ownerIdentifier,
       agentSecretHash,
+      webhookUrl: args.webhookUrl,
+      webhookToken: args.webhookToken,
       createdAt: Date.now(),
     });
 
@@ -90,8 +94,9 @@ export const register = mutation({
         poll: `/agent/poll?streamId=${streamId}`,
         reply: `/agent/reply`,
         ack: `/agent/ack`,
-        updateStream: `/agent/stream/${streamId}`,
+        updateStream: `/agent/stream`,
       },
+      webhookConfigured: !!args.webhookUrl,
     };
   },
 });
