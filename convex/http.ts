@@ -487,4 +487,55 @@ http.route({
   }),
 });
 
+// CORS for agents
+http.route({
+  path: "/arena/agents",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+// List agents
+http.route({
+  path: "/arena/agents",
+  method: "GET",
+  handler: httpAction(async (ctx) => {
+    const agents = await ctx.runQuery(api.arena.listAgents, {});
+    // Strip secrets from response
+    const safeAgents = agents.map((a: any) => ({
+      _id: a._id,
+      name: a.name,
+      model: a.model,
+      elo: a.elo,
+      wins: a.wins,
+      losses: a.losses,
+      draws: a.draws,
+    }));
+    return new Response(JSON.stringify({ agents: safeAgents }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }),
+});
+
+// Register agent
+http.route({
+  path: "/arena/agents",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      const result = await ctx.runMutation(api.arena.registerAgent, body);
+      return new Response(JSON.stringify(result), {
+        status: 201,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ error: error.message || "Failed to register agent" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+  }),
+});
+
 export default http;

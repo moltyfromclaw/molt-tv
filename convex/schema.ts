@@ -124,7 +124,7 @@ export default defineSchema({
     .index("by_match", ["matchId"])
     .index("by_voter", ["matchId", "odhterId"]),
   
-  // Leaderboard
+  // Leaderboard / Registered Agents
   arenaAgents: defineTable({
     name: v.string(),
     model: v.string(),
@@ -133,6 +133,10 @@ export default defineSchema({
     losses: v.number(),
     draws: v.number(),
     lastMatchAt: v.optional(v.number()),
+    // Auth & Webhooks
+    secretHash: v.optional(v.string()),
+    webhookUrl: v.optional(v.string()),
+    createdAt: v.optional(v.number()),
   })
     .index("by_name", ["name"])
     .index("by_elo", ["elo"]),

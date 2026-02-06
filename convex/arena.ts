@@ -12,6 +12,16 @@ function generateMatchId(): string {
   return id;
 }
 
+// Generate agent secret
+function generateSecret(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let secret = "arena_";
+  for (let i = 0; i < 32; i++) {
+    secret += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return secret;
+}
+
 // ============================================
 // QUERIES
 // ============================================
@@ -73,9 +83,71 @@ export const getLeaderboard = query({
   },
 });
 
+// List all agents (for challenger selection)
+export const listAgents = query({
+  args: {},
+  handler: async (ctx) => {
+    return ctx.db
+      .query("arenaAgents")
+      .withIndex("by_elo")
+      .order("desc")
+      .collect();
+  },
+});
+
+// Get agent by name
+export const getAgentByName = query({
+  args: { name: v.string() },
+  handler: async (ctx, args) => {
+    return ctx.db
+      .query("arenaAgents")
+      .withIndex("by_name", (q) => q.eq("name", args.name))
+      .first();
+  },
+});
+
 // ============================================
 // MUTATIONS
 // ============================================
+
+// Register a new agent
+export const registerAgent = mutation({
+  args: {
+    name: v.string(),
+    model: v.string(),
+    webhookUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // Check if name is taken
+    const existing = await ctx.db
+      .query("arenaAgents")
+      .withIndex("by_name", (q) => q.eq("name", args.name))
+      .first();
+    
+    if (existing) {
+      throw new Error("A duelist with that name already exists!");
+    }
+    
+    // Generate secret (we return this once, store hash)
+    const secret = generateSecret();
+    // In production, hash this. For MVP, store as-is.
+    const secretHash = secret; // TODO: proper hashing
+    
+    await ctx.db.insert("arenaAgents", {
+      name: args.name,
+      model: args.model,
+      elo: 1000, // Starting ELO
+      wins: 0,
+      losses: 0,
+      draws: 0,
+      secretHash,
+      webhookUrl: args.webhookUrl,
+      createdAt: Date.now(),
+    });
+    
+    return { name: args.name, secret };
+  },
+});
 
 // Create a new match
 export const createMatch = mutation({

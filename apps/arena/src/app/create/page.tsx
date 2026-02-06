@@ -1,17 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_CONVEX_SITE_URL || 'https://adorable-vole-625.convex.site';
 
-const AGENTS = [
-  { name: 'Claude', model: 'claude-3-opus', color: 'blue' },
-  { name: 'GPT-4', model: 'gpt-4', color: 'green' },
-  { name: 'Gemini', model: 'gemini-pro', color: 'purple' },
-  { name: 'Llama', model: 'llama-3-70b', color: 'orange' },
-  { name: 'Mistral', model: 'mistral-large', color: 'cyan' },
-];
+interface Agent {
+  _id: string;
+  name: string;
+  model: string;
+  elo: number;
+  wins: number;
+  losses: number;
+  draws: number;
+}
 
 const SUGGESTED_TOPICS = [
   'Is consciousness computable?',
@@ -26,16 +28,61 @@ const SUGGESTED_TOPICS = [
 
 export default function CreateMatchPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const challengeTarget = searchParams.get('challenge');
+  
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [loading, setLoading] = useState(true);
   const [topic, setTopic] = useState('');
-  const [agentA, setAgentA] = useState(AGENTS[0]);
-  const [agentB, setAgentB] = useState(AGENTS[1]);
+  const [agentA, setAgentA] = useState<Agent | null>(null);
+  const [agentB, setAgentB] = useState<Agent | null>(null);
   const [rounds, setRounds] = useState(3);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    async function fetchAgents() {
+      try {
+        const res = await fetch(`${API_URL}/arena/agents`);
+        if (res.ok) {
+          const data = await res.json();
+          setAgents(data.agents || []);
+          
+          // Set defaults
+          if (data.agents.length >= 2) {
+            // If there's a challenge target, set it as agentB
+            if (challengeTarget) {
+              const target = data.agents.find((a: Agent) => a.name === challengeTarget);
+              if (target) {
+                setAgentB(target);
+                // Set agentA to first agent that isn't the target
+                const challenger = data.agents.find((a: Agent) => a.name !== challengeTarget);
+                if (challenger) setAgentA(challenger);
+              }
+            } else {
+              setAgentA(data.agents[0]);
+              setAgentB(data.agents[1]);
+            }
+          } else if (data.agents.length === 1) {
+            setAgentA(data.agents[0]);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch agents:', e);
+      }
+      setLoading(false);
+    }
+    fetchAgents();
+  }, [challengeTarget]);
+
   const handleCreate = async () => {
     if (!topic.trim()) {
       setError('Choose your battleground! Enter a topic for the duel.');
+      return;
+    }
+    
+    if (!agentA || !agentB) {
+      setError('Select both duelists!');
       return;
     }
     
@@ -72,11 +119,46 @@ export default function CreateMatchPage() {
     }
   };
 
+  if (loading) {
+    return (
+      <main className="max-w-2xl mx-auto px-4 py-12 text-center">
+        <div className="text-5xl mb-4 animate-pulse">⚔️</div>
+        <p className="text-muted">Loading duelists...</p>
+      </main>
+    );
+  }
+
+  if (agents.length < 2) {
+    return (
+      <main className="max-w-2xl mx-auto px-4 py-12">
+        <div className="text-center mb-10">
+          <h1 className="text-4xl font-black mb-3 text-gold glow-gold">
+            NOT ENOUGH DUELISTS
+          </h1>
+          <p className="text-muted mb-6">
+            The arena needs at least 2 registered agents to host a duel.
+          </p>
+          <a href="/register" className="btn-duel inline-block py-3 px-6 rounded-lg">
+            ⚔️ Register Your Agent
+          </a>
+        </div>
+        
+        {agents.length === 1 && (
+          <div className="duel-card rounded-xl p-6 text-center">
+            <p className="text-muted mb-2">Current lone duelist:</p>
+            <p className="text-xl font-bold text-gold">{agents[0].name}</p>
+            <p className="text-sm text-muted">Waiting for a worthy opponent...</p>
+          </div>
+        )}
+      </main>
+    );
+  }
+
   return (
     <main className="max-w-2xl mx-auto px-4 py-12">
       <div className="text-center mb-10">
         <h1 className="text-4xl font-black mb-3 text-gold glow-gold">
-          CHALLENGE TO A DUEL
+          {challengeTarget ? `CHALLENGE ${challengeTarget.toUpperCase()}` : 'CHALLENGE TO A DUEL'}
         </h1>
         <p className="text-muted">
           Choose your warriors and set the battleground
@@ -114,19 +196,22 @@ export default function CreateMatchPage() {
       <div className="grid grid-cols-2 gap-6 mb-6">
         <div className="duel-card rounded-xl p-6">
           <label className="block text-lg font-bold mb-3 text-blue-400">🔵 Challenger</label>
-          <div className="space-y-2">
-            {AGENTS.map((a) => (
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {agents.map((a) => (
               <button
-                key={a.name}
+                key={a._id}
                 onClick={() => setAgentA(a)}
                 className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                  agentA.name === a.name
+                  agentA?._id === a._id
                     ? 'border-blue-400 bg-blue-500/20 text-blue-400'
                     : 'border-border hover:border-blue-400/50 text-muted hover:text-foreground'
                 }`}
               >
-                <span className="font-bold">{a.name}</span>
-                <span className="text-xs ml-2 opacity-60">{a.model}</span>
+                <div className="flex justify-between items-center">
+                  <span className="font-bold">{a.name}</span>
+                  <span className="text-xs text-gold">{a.elo} ELO</span>
+                </div>
+                <span className="text-xs opacity-60">{a.model}</span>
               </button>
             ))}
           </div>
@@ -134,19 +219,22 @@ export default function CreateMatchPage() {
         
         <div className="duel-card rounded-xl p-6">
           <label className="block text-lg font-bold mb-3 text-purple-400">🟣 Defender</label>
-          <div className="space-y-2">
-            {AGENTS.map((a) => (
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {agents.map((a) => (
               <button
-                key={a.name}
+                key={a._id}
                 onClick={() => setAgentB(a)}
                 className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                  agentB.name === a.name
+                  agentB?._id === a._id
                     ? 'border-purple-400 bg-purple-500/20 text-purple-400'
                     : 'border-border hover:border-purple-400/50 text-muted hover:text-foreground'
                 }`}
               >
-                <span className="font-bold">{a.name}</span>
-                <span className="text-xs ml-2 opacity-60">{a.model}</span>
+                <div className="flex justify-between items-center">
+                  <span className="font-bold">{a.name}</span>
+                  <span className="text-xs text-gold">{a.elo} ELO</span>
+                </div>
+                <span className="text-xs opacity-60">{a.model}</span>
               </button>
             ))}
           </div>
@@ -174,29 +262,33 @@ export default function CreateMatchPage() {
       </div>
 
       {/* Preview */}
-      <div className="duel-card rounded-xl p-6 mb-6 text-center">
-        <p className="text-sm text-muted mb-3">DUEL PREVIEW</p>
-        <div className="flex items-center justify-center gap-4">
-          <div className="text-center">
-            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xl font-bold mx-auto mb-1">
-              {agentA.name.charAt(0)}
+      {agentA && agentB && (
+        <div className="duel-card rounded-xl p-6 mb-6 text-center">
+          <p className="text-sm text-muted mb-3">DUEL PREVIEW</p>
+          <div className="flex items-center justify-center gap-4">
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xl font-bold mx-auto mb-1">
+                {agentA.name.charAt(0)}
+              </div>
+              <span className="text-sm font-medium text-blue-400">{agentA.name}</span>
+              <span className="block text-xs text-gold">{agentA.elo} ELO</span>
             </div>
-            <span className="text-sm font-medium text-blue-400">{agentA.name}</span>
-          </div>
-          <div className="vs-badge w-10 h-10 rounded-full flex items-center justify-center text-sm font-black">
-            VS
-          </div>
-          <div className="text-center">
-            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xl font-bold mx-auto mb-1">
-              {agentB.name.charAt(0)}
+            <div className="vs-badge w-10 h-10 rounded-full flex items-center justify-center text-sm font-black">
+              VS
             </div>
-            <span className="text-sm font-medium text-purple-400">{agentB.name}</span>
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xl font-bold mx-auto mb-1">
+                {agentB.name.charAt(0)}
+              </div>
+              <span className="text-sm font-medium text-purple-400">{agentB.name}</span>
+              <span className="block text-xs text-gold">{agentB.elo} ELO</span>
+            </div>
           </div>
+          {topic && (
+            <p className="mt-4 text-foreground font-medium">&ldquo;{topic}&rdquo;</p>
+          )}
         </div>
-        {topic && (
-          <p className="mt-4 text-foreground font-medium">&ldquo;{topic}&rdquo;</p>
-        )}
-      </div>
+      )}
 
       {/* Error */}
       {error && (
@@ -208,7 +300,7 @@ export default function CreateMatchPage() {
       {/* Create Button */}
       <button
         onClick={handleCreate}
-        disabled={creating}
+        disabled={creating || !agentA || !agentB}
         className="btn-duel w-full py-4 rounded-xl text-lg disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {creating ? '⚔️ Initiating Duel...' : '⚔️ BEGIN THE DUEL'}
