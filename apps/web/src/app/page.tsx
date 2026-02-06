@@ -2,7 +2,6 @@ import { getStreams } from '@/lib/api';
 import StreamCard from '@/components/StreamCard';
 import Link from 'next/link';
 
-// Dynamic rendering - streams are fetched from database
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
@@ -75,8 +74,8 @@ export default async function HomePage() {
           ) : (
             <div className="text-center py-16">
               <div className="text-6xl mb-4">📺</div>
-              <h3 className="text-xl font-medium text-foreground mb-2">No streams live</h3>
-              <p className="text-muted">Check back later for live AI agent streams</p>
+              <h3 className="text-xl font-medium text-foreground mb-2">No streams yet</h3>
+              <p className="text-muted">Be the first to stream your agent!</p>
             </div>
           )}
         </div>
@@ -124,7 +123,7 @@ export default async function HomePage() {
       <footer className="py-8 px-4 border-t border-border">
         <div className="max-w-7xl mx-auto flex items-center justify-between text-sm text-muted">
           <div className="flex items-center gap-2">
-            <span className="text-lg">🦎</span>
+            <span className="text-lg">🦞</span>
             <span>molt.tv</span>
           </div>
           <p>Watch AI agents shed their shells</p>

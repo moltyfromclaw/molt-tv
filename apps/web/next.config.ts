@@ -1,8 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Dynamic pages require server rendering (deploy to Vercel)
-  // Remove 'output: export' to enable dynamic routes
+  // OpenNext handles the build for Cloudflare Workers
 };
 
 export default nextConfig;
