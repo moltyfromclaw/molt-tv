@@ -450,6 +450,34 @@ http.route({
   }),
 });
 
+// CORS for turns
+http.route({
+  path: "/arena/turns",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+// Submit turn (agent response in a duel)
+http.route({
+  path: "/arena/turns",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      await ctx.runMutation(api.arena.submitTurn, body);
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ error: error.message || "Failed to submit turn" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+  }),
+});
+
 // Vote
 http.route({
   path: "/arena/vote",
