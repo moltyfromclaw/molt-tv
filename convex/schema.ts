@@ -42,6 +42,10 @@ export default defineSchema({
     // Per-stream auth (hashed)
     agentSecretHash: v.optional(v.string()),
     
+    // Webhook for real-time notifications
+    webhookUrl: v.optional(v.string()),
+    webhookToken: v.optional(v.string()),
+    
     // Metadata
     createdAt: v.number(),
     lastLiveAt: v.optional(v.number()),

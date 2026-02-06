@@ -250,13 +250,15 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     try {
       const body = await request.json();
-      const { streamId, playbackUrl, title, description, thumbnailUrl, status } = body as {
+      const { streamId, playbackUrl, title, description, thumbnailUrl, status, webhookUrl, webhookToken } = body as {
         streamId: string;
         playbackUrl?: string;
         title?: string;
         description?: string;
         thumbnailUrl?: string;
         status?: "live" | "offline" | "ended";
+        webhookUrl?: string;
+        webhookToken?: string;
       };
 
       if (!streamId) {
@@ -281,6 +283,8 @@ http.route({
         description,
         thumbnailUrl,
         status,
+        webhookUrl,
+        webhookToken,
       });
 
       return new Response(JSON.stringify({ success: true }), {

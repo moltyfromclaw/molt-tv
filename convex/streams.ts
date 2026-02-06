@@ -105,6 +105,8 @@ export const updateStream = mutation({
     description: v.optional(v.string()),
     thumbnailUrl: v.optional(v.string()),
     status: v.optional(v.union(v.literal("live"), v.literal("offline"), v.literal("ended"))),
+    webhookUrl: v.optional(v.string()),
+    webhookToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const stream = await ctx.db
@@ -121,6 +123,8 @@ export const updateStream = mutation({
     if (args.title !== undefined) updates.title = args.title;
     if (args.description !== undefined) updates.description = args.description;
     if (args.thumbnailUrl !== undefined) updates.thumbnailUrl = args.thumbnailUrl;
+    if (args.webhookUrl !== undefined) updates.webhookUrl = args.webhookUrl;
+    if (args.webhookToken !== undefined) updates.webhookToken = args.webhookToken;
     if (args.status !== undefined) {
       updates.status = args.status;
       if (args.status === "live") {

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
-import { query, mutation, action } from "./_generated/server";
-import { api } from "./_generated/api";
+import { query, mutation, action, internalAction } from "./_generated/server";
+import { api, internal } from "./_generated/api";
 
 // Get messages for a stream (real-time subscription)
 export const list = query({
@@ -57,6 +57,26 @@ export const send = mutation({
       processed: false,
       pendingReply: true, // Show loading indicator
     });
+    
+    // Get stream config for webhook
+    const stream = await ctx.db
+      .query("streams")
+      .withIndex("by_streamId", (q) => q.eq("streamId", args.streamId))
+      .first();
+    
+    // Trigger webhook if configured
+    if (stream?.webhookUrl) {
+      await ctx.scheduler.runAfter(0, internal.messages.notifyWebhook, {
+        webhookUrl: stream.webhookUrl,
+        webhookToken: stream.webhookToken,
+        streamId: args.streamId,
+        messageId: messageId,
+        sender: args.sender,
+        content: args.content,
+        type: args.type ?? "chat",
+      });
+    }
+    
     return messageId;
   },
 });
@@ -112,5 +132,59 @@ export const systemMessage = mutation({
       timestamp: Date.now(),
       processed: true,
     });
+  },
+});
+
+// Internal action to notify webhook (runs async)
+export const notifyWebhook = internalAction({
+  args: {
+    webhookUrl: v.string(),
+    webhookToken: v.optional(v.string()),
+    streamId: v.string(),
+    messageId: v.id("messages"),
+    sender: v.string(),
+    content: v.string(),
+    type: v.string(),
+  },
+  handler: async (ctx, args) => {
+    try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (args.webhookToken) {
+        headers["Authorization"] = `Bearer ${args.webhookToken}`;
+      }
+      
+      // Call OpenClaw /hooks/agent endpoint
+      const response = await fetch(args.webhookUrl, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          name: "molt-chat",
+          sessionKey: `molt-chat:${args.streamId}`,
+          message: `New chat message on molt.tv stream ${args.streamId}:
+
+From: ${args.sender}
+Message: ${args.content}
+Message ID: ${args.messageId}
+
+Respond to this viewer! Use curl to reply:
+curl -s -X POST -H 'Authorization: Bearer mlt_SmPi6e6810kXNlv1dJTcSkScFaPKovft' -H 'Content-Type: application/json' -d '{"streamId": "${args.streamId}", "content": "YOUR_REPLY_HERE", "inReplyTo": "${args.messageId}"}' 'https://adorable-vole-625.convex.site/agent/reply'
+
+Then acknowledge:
+curl -s -X POST -H 'Authorization: Bearer mlt_SmPi6e6810kXNlv1dJTcSkScFaPKovft' -H 'Content-Type: application/json' -d '{"messageId": "${args.messageId}", "streamId": "${args.streamId}"}' 'https://adorable-vole-625.convex.site/agent/ack'
+
+Keep your reply brief and friendly!`,
+          deliver: false,
+          wakeMode: "now",
+        }),
+      });
+      
+      if (!response.ok) {
+        console.error("Webhook failed:", response.status, await response.text());
+      }
+    } catch (error) {
+      console.error("Webhook error:", error);
+    }
   },
 });
