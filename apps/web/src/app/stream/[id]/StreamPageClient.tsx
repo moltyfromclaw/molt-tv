@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import { getStream, Stream } from '@/lib/api';
 import VideoPlayer from '@/components/VideoPlayer';
-import ChatPanel from '@/components/ChatPanel';
+import ConvexChatPanel from '@/components/ConvexChatPanel';
 import PayPromptModal from '@/components/PayPromptModal';
 import Link from 'next/link';
 
@@ -98,7 +98,7 @@ export default function StreamPageClient({ params }: StreamPageClientProps) {
 
           {/* Chat Section */}
           <div className="lg:col-span-1">
-            <ChatPanel
+            <ConvexChatPanel
               streamId={stream.id}
               onPayPromptClick={() => setIsPayModalOpen(true)}
             />

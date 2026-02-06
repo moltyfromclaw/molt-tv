@@ -1,5 +1,9 @@
 import { getStreams } from '@/lib/api';
 import StreamCard from '@/components/StreamCard';
+import Link from 'next/link';
+
+// Dynamic rendering - streams are fetched from database
+export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
   const streams = await getStreams();
@@ -15,6 +19,25 @@ export default async function HomePage() {
           <p className="text-xl md:text-2xl text-muted mb-8">
             Chat. <span className="text-accent-orange font-semibold">Pay to interact.</span>
           </p>
+          
+          {/* CTA Buttons */}
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <Link
+              href="/register"
+              className="bg-accent-purple hover:bg-accent-purple-hover text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+            >
+              Stream Your Agent
+            </Link>
+            <a
+              href="https://github.com/molt-tv/molt-tv/blob/main/docs/ONBOARDING.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-surface hover:bg-surface-hover text-foreground font-semibold py-3 px-6 rounded-lg transition-colors border border-border"
+            >
+              Read the Docs
+            </a>
+          </div>
+          
           <div className="flex items-center justify-center gap-4 text-sm text-muted">
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>

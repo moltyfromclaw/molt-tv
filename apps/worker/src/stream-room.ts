@@ -74,6 +74,12 @@ export class StreamRoom implements DurableObject {
         case "/broadcast":
           return this.handleBroadcast(request);
         
+        case "/store":
+          return this.handleStore(request);
+        
+        case "/messages":
+          return this.handleGetMessages(request);
+        
         default:
           return new Response("Not found", { status: 404 });
       }
@@ -95,8 +101,68 @@ export class StreamRoom implements DurableObject {
 
   private async handleBroadcast(request: Request): Promise<Response> {
     const message = await request.text();
+    const sessionCount = this.sessions.size;
+    const namedSessions = Array.from(this.sessions.values()).filter(s => s.name).length;
+    console.log(`[Broadcast] Received message, sessions: ${sessionCount}, named: ${namedSessions}`);
+    console.log(`[Broadcast] Message: ${message.substring(0, 100)}`);
     this.broadcast(message);
-    return new Response("OK");
+    return new Response(`OK - broadcast to ${namedSessions} clients`);
+  }
+
+  private async handleStore(request: Request): Promise<Response> {
+    const message = await request.text();
+    try {
+      const parsed = JSON.parse(message);
+      const key = new Date(parsed.timestamp || Date.now()).toISOString();
+      await this.state.storage.put(key, message);
+      console.log(`[Store] Stored message with key: ${key}`);
+      return new Response("OK - stored");
+    } catch (e) {
+      console.log(`[Store] Failed to store: ${e}`);
+      return new Response("Failed to store", { status: 500 });
+    }
+  }
+
+  private async handleGetMessages(request: Request): Promise<Response> {
+    const url = new URL(request.url);
+    const since = url.searchParams.get("since");
+    const limit = parseInt(url.searchParams.get("limit") || "50");
+
+    // Get messages from storage
+    const options: { reverse?: boolean; limit?: number; start?: string } = {
+      reverse: true,
+      limit
+    };
+    
+    if (since) {
+      // Get messages after this timestamp
+      options.start = since;
+      options.reverse = false;
+    }
+
+    const storage = await this.state.storage.list(options);
+    const messages: any[] = [];
+    
+    storage.forEach((value, key) => {
+      try {
+        const msg = typeof value === 'string' ? JSON.parse(value) : value;
+        // Filter to only chat and paid_prompt messages (not system, not agent_response)
+        if (msg.type === 'chat' || msg.type === 'paid_prompt') {
+          messages.push(msg);
+        }
+      } catch {
+        // Skip malformed messages
+      }
+    });
+
+    // Sort by timestamp if we got them in reverse
+    if (!since) {
+      messages.reverse();
+    }
+
+    return new Response(JSON.stringify({ messages }), {
+      headers: { "Content-Type": "application/json" }
+    });
   }
 
   private async handleSession(webSocket: WebSocket, ip: string): Promise<void> {
@@ -233,20 +299,28 @@ export class StreamRoom implements DurableObject {
   private broadcast(message: string | object): void {
     const messageStr = typeof message === 'string' ? message : JSON.stringify(message);
     const quitters: SessionData[] = [];
+    let sentCount = 0;
+    let queuedCount = 0;
 
     this.sessions.forEach((session, webSocket) => {
       if (session.name) {
         try {
           webSocket.send(messageStr);
-        } catch {
+          sentCount++;
+          console.log(`[Broadcast] Sent to ${session.name}`);
+        } catch (e) {
+          console.log(`[Broadcast] FAILED to send to ${session.name}: ${e}`);
           session.quit = true;
           quitters.push(session);
           this.sessions.delete(webSocket);
         }
       } else {
         session.blockedMessages.push(messageStr);
+        queuedCount++;
       }
     });
+    
+    console.log(`[Broadcast] Complete: sent=${sentCount}, queued=${queuedCount}, failed=${quitters.length}`);
 
     // Notify about disconnected users
     quitters.forEach(quitter => {

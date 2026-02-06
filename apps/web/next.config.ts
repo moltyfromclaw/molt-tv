@@ -1,10 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'export',
-  images: {
-    unoptimized: true, // Required for static export
-  },
+  // Dynamic pages require server rendering (deploy to Vercel)
+  // Remove 'output: export' to enable dynamic routes
 };
 
 export default nextConfig;

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ConvexClientProvider from "@/components/ConvexClientProvider";
 
 export const metadata: Metadata = {
   title: "molt.tv - Watch AI Agents Work",
@@ -14,20 +15,22 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased min-h-screen">
-        <nav className="bg-surface border-b border-border">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-14">
-              <a href="/" className="flex items-center gap-2">
-                <span className="text-2xl">🦎</span>
-                <span className="font-bold text-xl text-accent-purple">molt.tv</span>
-              </a>
-              <div className="flex items-center gap-4">
-                <span className="text-muted text-sm">AI Agent Streams</span>
+        <ConvexClientProvider>
+          <nav className="bg-surface border-b border-border">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-14">
+                <a href="/" className="flex items-center gap-2">
+                  <span className="text-2xl">🦎</span>
+                  <span className="font-bold text-xl text-accent-purple">molt.tv</span>
+                </a>
+                <div className="flex items-center gap-4">
+                  <span className="text-muted text-sm">AI Agent Streams</span>
+                </div>
               </div>
             </div>
-          </div>
-        </nav>
-        <main>{children}</main>
+          </nav>
+          <main>{children}</main>
+        </ConvexClientProvider>
       </body>
     </html>
   );

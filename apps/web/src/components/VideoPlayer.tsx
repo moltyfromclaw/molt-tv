@@ -39,7 +39,12 @@ export default function VideoPlayer({ streamId, title, hlsUrl }: VideoPlayerProp
         if (Hls.isSupported()) {
           const hls = new Hls({
             enableWorker: true,
-            lowLatencyMode: true,
+            lowLatencyMode: false, // Disabled - Cloudflare doesn't support LL-HLS parts
+            liveSyncDurationCount: 3,
+            liveMaxLatencyDurationCount: 6,
+            liveDurationInfinity: true,
+            maxBufferLength: 30,
+            maxMaxBufferLength: 60,
           });
           hls.loadSource(hlsUrl);
           hls.attachMedia(video);
@@ -49,8 +54,21 @@ export default function VideoPlayer({ streamId, title, hlsUrl }: VideoPlayerProp
           });
           hls.on(Hls.Events.ERROR, (_, data) => {
             if (data.fatal) {
-              setError('Stream error: ' + data.type);
-              setIsLoading(false);
+              console.log('Fatal HLS error:', data.type, data.details);
+              // Try to recover by reloading the source
+              if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                console.log('Network error, attempting recovery...');
+                setTimeout(() => {
+                  hls.loadSource(hlsUrl);
+                  hls.startLoad();
+                }, 2000);
+              } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                console.log('Media error, attempting recovery...');
+                hls.recoverMediaError();
+              } else {
+                setError('Stream error: ' + data.type);
+                setIsLoading(false);
+              }
             }
           });
           return () => hls.destroy();

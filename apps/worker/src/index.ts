@@ -105,6 +105,11 @@ async function handleApiRequest(path: string[], request: Request, env: Env): Pro
       return handleAgentResponse(streamId, request, env);
     }
 
+    // /api/streams/:id/messages - Get recent messages (for agent polling)
+    if (path[2] === "messages" && request.method === "GET") {
+      return getRecentMessages(streamId, request, env);
+    }
+
     // /api/streams/:id - Get or delete stream
     if (!path[2]) {
       if (request.method === "GET") {
@@ -408,20 +413,67 @@ async function handleAgentResponse(streamId: string, request: Request, env: Env)
 
   const room = env.STREAMS.get(roomId);
   const chatMessage: ChatMessage = {
-    type: 'agent_response',
-    name: 'Agent',
+    type: 'chat',  // TEMPORARILY changed to 'chat' for debugging
+    name: '🦎 Molty',
     message: body.message,
     timestamp: Date.now(),
     inReplyTo: body.inReplyTo
   };
 
-  await room.fetch(new Request("https://internal/broadcast", {
+  console.log(`[AgentResponse] Broadcasting to ${streamId}:`, JSON.stringify(chatMessage));
+
+  // Broadcast AND store (like regular chat messages)
+  const messageStr = JSON.stringify(chatMessage);
+  const broadcastRes = await room.fetch(new Request("https://internal/broadcast", {
     method: "POST",
-    body: JSON.stringify(chatMessage)
+    body: messageStr
   }));
+  
+  // Also store the message
+  const storeRes = await room.fetch(new Request("https://internal/store", {
+    method: "POST",
+    body: messageStr
+  }));
+
+  console.log(`[AgentResponse] Broadcast result: ${broadcastRes.status}, Store: ${storeRes.status}`);
 
   return jsonResponse({
     success: true,
-    message: "Response delivered"
+    message: "Response delivered",
+    debug: { roomId: roomId.toString(), streamId }
   });
+}
+
+// === Get Recent Messages (for agent polling) ===
+
+async function getRecentMessages(streamId: string, request: Request, env: Env): Promise<Response> {
+  // Authenticate agent
+  const agentSecret = request.headers.get("X-Agent-Secret");
+  if (agentSecret !== env.AGENT_SECRET) {
+    return errorResponse("Unauthorized", 401);
+  }
+
+  const url = new URL(request.url);
+  const since = url.searchParams.get("since"); // ISO timestamp
+  const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100);
+
+  // Get the Durable Object for this stream
+  let roomId: DurableObjectId;
+  if (streamId.match(/^[0-9a-f]{64}$/)) {
+    roomId = env.STREAMS.idFromString(streamId);
+  } else {
+    roomId = env.STREAMS.idFromName(streamId);
+  }
+
+  const room = env.STREAMS.get(roomId);
+  
+  // Forward to DO to get messages
+  const messagesUrl = new URL("https://internal/messages");
+  if (since) messagesUrl.searchParams.set("since", since);
+  messagesUrl.searchParams.set("limit", limit.toString());
+  
+  const response = await room.fetch(messagesUrl.toString());
+  const messages = await response.json();
+  
+  return jsonResponse(messages);
 }
