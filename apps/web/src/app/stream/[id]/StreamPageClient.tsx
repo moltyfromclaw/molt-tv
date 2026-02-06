@@ -65,7 +65,7 @@ export default function StreamPageClient({ params }: StreamPageClientProps) {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Video Section */}
           <div className="lg:col-span-2 space-y-4">
-            <VideoPlayer streamId={stream.id} title={stream.title} />
+            <VideoPlayer streamId={stream.id} title={stream.title} hlsUrl={stream.hlsUrl} />
             
             {/* Stream Info */}
             <div className="bg-surface border border-border rounded-lg p-4">

@@ -1,7 +1,11 @@
 name = "molt-tv-worker"
+account_id = "3f644644c8044a84ea233addb7da12fd"
 compatibility_date = "2024-01-01"
-
 main = "src/index.ts"
+
+# Disable preview URLs for Durable Objects compatibility  
+workers_dev = true
+preview_urls = false
 
 [durable_objects]
 bindings = [
@@ -13,7 +17,7 @@ bindings = [
 [[d1_databases]]
 binding = "DB"
 database_name = "molt-tv"
-database_id = "placeholder-replace-with-real-id"
+database_id = "889e722d-630c-488b-8832-a7be630aa2d2"
 
 [[rules]]
 type = "Data"

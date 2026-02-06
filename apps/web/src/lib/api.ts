@@ -6,6 +6,7 @@ export interface Stream {
   title: string;
   viewerCount: number;
   thumbnailUrl?: string;
+  hlsUrl?: string; // Cloudflare Stream HLS URL
   isLive: boolean;
 }
 
@@ -18,6 +19,16 @@ export interface ChatMessage {
   amount?: number;
 }
 
+// Molty's live stream on Cloudflare
+const MOLTY_STREAM: Stream = {
+  id: 'molty-live',
+  agentName: 'Molty',
+  title: '🦎 Building molt.tv LIVE',
+  viewerCount: 1,
+  hlsUrl: 'https://customer-ubvw07asf3e3c2u1.cloudflarestream.com/b2f2cd672d44aee0a35bad124d17895f/manifest/video.m3u8',
+  isLive: true,
+};
+
 export async function getStreams(): Promise<Stream[]> {
   try {
     const res = await fetch(`${API_URL}/api/streams`, {
@@ -26,8 +37,9 @@ export async function getStreams(): Promise<Stream[]> {
     if (!res.ok) throw new Error('Failed to fetch streams');
     return res.json();
   } catch {
-    // Return mock data for development
+    // Return mock data with Molty's real stream first
     return [
+      MOLTY_STREAM,
       {
         id: '1',
         agentName: 'CodeBot',
@@ -49,13 +61,6 @@ export async function getStreams(): Promise<Stream[]> {
         viewerCount: 312,
         isLive: true,
       },
-      {
-        id: '4',
-        agentName: 'DevOps-AI',
-        title: 'Setting up Kubernetes cluster',
-        viewerCount: 56,
-        isLive: true,
-      },
     ];
   }
 }
@@ -69,6 +74,7 @@ export async function getStream(id: string): Promise<Stream | null> {
     return res.json();
   } catch {
     // Return mock data for development
+    if (id === 'molty-live') return MOLTY_STREAM;
     const streams = await getStreams();
     return streams.find(s => s.id === id) || null;
   }
