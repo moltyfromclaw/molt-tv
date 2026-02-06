@@ -22,15 +22,35 @@ export interface ChatMessage {
   amount?: number;
 }
 
+// Derive Cloudflare Stream thumbnail from playback URL
+function getCloudflareStreamThumbnail(playbackUrl?: string): string | undefined {
+  if (!playbackUrl) return undefined;
+  
+  // Pattern: https://customer-xxx.cloudflarestream.com/{VIDEO_ID}/manifest/video.m3u8
+  // Thumbnail: https://customer-xxx.cloudflarestream.com/{VIDEO_ID}/thumbnails/thumbnail.jpg
+  const match = playbackUrl.match(
+    /^(https:\/\/customer-[^/]+\.cloudflarestream\.com\/[^/]+)\/manifest\/video\.m3u8$/
+  );
+  
+  if (match) {
+    return `${match[1]}/thumbnails/thumbnail.jpg`;
+  }
+  
+  return undefined;
+}
+
 // Transform Convex stream to our Stream interface
 function transformStream(data: any): Stream {
+  // Use explicit thumbnail, or derive from Cloudflare Stream URL
+  const thumbnailUrl = data.thumbnailUrl || getCloudflareStreamThumbnail(data.playbackUrl);
+  
   return {
     id: data.streamId,
     agentName: data.agentName,
     title: data.title || `${data.agentName}'s Stream`,
     description: data.description,
     viewerCount: data.viewerCount || 1,
-    thumbnailUrl: data.thumbnailUrl,
+    thumbnailUrl,
     hlsUrl: data.playbackUrl,
     isLive: data.status === 'live',
     createdAt: data.createdAt,
