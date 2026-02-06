@@ -1,21 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0f;
-  --foreground: #f0f0f0;
-  --surface: #111118;
-  --surface-hover: #1a1a24;
-  --border: #2a2a3a;
-  --muted: #888;
-  --accent-purple: #a855f7;
-  --accent-orange: #f97316;
+  --background: #0a0812;
+  --foreground: #f0e6d3;
+  --surface: #1a1424;
+  --surface-hover: #2a1f3a;
+  --border: #3d2f5a;
+  --muted: #9a8fb0;
+  --gold: #ffd700;
+  --gold-dark: #b8860b;
+  --purple-glow: #9333ea;
+  --blue-eyes: #4fc3f7;
+  --dark-magician: #7c3aed;
+  --red-eyes: #ef4444;
   --success: #22c55e;
   --error: #ef4444;
 }
 
 body {
   background: var(--background);
+  background-image: 
+    radial-gradient(ellipse at top, rgba(147, 51, 234, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom, rgba(79, 195, 247, 0.1) 0%, transparent 50%);
   color: var(--foreground);
+  min-height: 100vh;
 }
 
 .bg-background { background: var(--background); }
@@ -24,7 +32,117 @@ body {
 .text-foreground { color: var(--foreground); }
 .text-muted { color: var(--muted); }
 .border-border { border-color: var(--border); }
-.bg-accent-purple { background: var(--accent-purple); }
-.bg-accent-orange { background: var(--accent-orange); }
-.text-accent-purple { color: var(--accent-purple); }
-.text-accent-orange { color: var(--accent-orange); }
+.text-gold { color: var(--gold); }
+.bg-gold { background: var(--gold); }
+
+/* Card styling */
+.duel-card {
+  background: linear-gradient(145deg, #1a1424 0%, #0f0a18 100%);
+  border: 2px solid var(--border);
+  box-shadow: 
+    0 0 20px rgba(147, 51, 234, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.duel-card:hover {
+  border-color: var(--gold);
+  box-shadow: 
+    0 0 30px rgba(255, 215, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Agent card */
+.agent-card {
+  background: linear-gradient(180deg, #2a1f3a 0%, #1a1424 100%);
+  border: 3px solid var(--border);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.agent-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--gold), var(--purple-glow), var(--gold));
+}
+
+.agent-card.blue {
+  border-color: var(--blue-eyes);
+  box-shadow: 0 0 20px rgba(79, 195, 247, 0.3);
+}
+
+.agent-card.blue::before {
+  background: linear-gradient(90deg, var(--blue-eyes), #fff, var(--blue-eyes));
+}
+
+.agent-card.purple {
+  border-color: var(--dark-magician);
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+}
+
+.agent-card.purple::before {
+  background: linear-gradient(90deg, var(--dark-magician), #c084fc, var(--dark-magician));
+}
+
+/* Glowing text */
+.glow-gold {
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.glow-purple {
+  text-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
+}
+
+/* VS divider */
+.vs-badge {
+  background: linear-gradient(145deg, #ffd700, #b8860b);
+  color: #000;
+  font-weight: 900;
+  text-shadow: none;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+/* Animate pulse for live */
+@keyframes duel-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+  50% { opacity: 0.7; box-shadow: 0 0 30px rgba(239, 68, 68, 0.8); }
+}
+
+.live-indicator {
+  animation: duel-pulse 2s ease-in-out infinite;
+}
+
+/* Button styles */
+.btn-duel {
+  background: linear-gradient(145deg, var(--gold), var(--gold-dark));
+  color: #000;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-duel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+}
+
+.btn-challenge {
+  background: linear-gradient(145deg, var(--dark-magician), #5b21b6);
+  color: white;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+}
+
+.btn-challenge:hover {
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5);
+}

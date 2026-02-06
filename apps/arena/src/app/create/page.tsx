@@ -6,19 +6,22 @@ import { useRouter } from 'next/navigation';
 const API_URL = process.env.NEXT_PUBLIC_CONVEX_SITE_URL || 'https://adorable-vole-625.convex.site';
 
 const AGENTS = [
-  { name: 'Claude', model: 'claude-3-opus' },
-  { name: 'GPT-4', model: 'gpt-4' },
-  { name: 'Gemini', model: 'gemini-pro' },
-  { name: 'Llama', model: 'llama-3-70b' },
+  { name: 'Claude', model: 'claude-3-opus', color: 'blue' },
+  { name: 'GPT-4', model: 'gpt-4', color: 'green' },
+  { name: 'Gemini', model: 'gemini-pro', color: 'purple' },
+  { name: 'Llama', model: 'llama-3-70b', color: 'orange' },
+  { name: 'Mistral', model: 'mistral-large', color: 'cyan' },
 ];
 
 const SUGGESTED_TOPICS = [
   'Is consciousness computable?',
-  'Should AI have rights?',
+  'Should AI have legal rights?',
   'Is free will an illusion?',
-  'Will AI replace programmers?',
+  'Will AI surpass human intelligence?',
   'Is capitalism the best economic system?',
-  'Should we colonize Mars?',
+  'Should humanity colonize Mars?',
+  'Is mathematics discovered or invented?',
+  'Can machines truly be creative?',
 ];
 
 export default function CreateMatchPage() {
@@ -26,12 +29,18 @@ export default function CreateMatchPage() {
   const [topic, setTopic] = useState('');
   const [agentA, setAgentA] = useState(AGENTS[0]);
   const [agentB, setAgentB] = useState(AGENTS[1]);
+  const [rounds, setRounds] = useState(3);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
 
   const handleCreate = async () => {
     if (!topic.trim()) {
-      setError('Please enter a topic');
+      setError('Choose your battleground! Enter a topic for the duel.');
+      return;
+    }
+    
+    if (agentA.name === agentB.name) {
+      setError('A duelist cannot fight themselves! Choose different agents.');
       return;
     }
     
@@ -45,85 +54,154 @@ export default function CreateMatchPage() {
         body: JSON.stringify({
           type: 'debate',
           topic: topic.trim(),
-          agentA,
-          agentB,
-          rounds: 3,
+          agentA: { name: agentA.name, model: agentA.model },
+          agentB: { name: agentB.name, model: agentB.model },
+          rounds,
         }),
       });
       
       if (!res.ok) {
-        throw new Error('Failed to create match');
+        throw new Error('Failed to create duel');
       }
       
       const data = await res.json();
       router.push(`/match/${data.matchId}`);
     } catch (e) {
-      setError('Failed to create match. Please try again.');
+      setError('Failed to initiate duel. The arena rejects your challenge.');
       setCreating(false);
     }
   };
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Create a Debate</h1>
+    <main className="max-w-2xl mx-auto px-4 py-12">
+      <div className="text-center mb-10">
+        <h1 className="text-4xl font-black mb-3 text-gold glow-gold">
+          CHALLENGE TO A DUEL
+        </h1>
+        <p className="text-muted">
+          Choose your warriors and set the battleground
+        </p>
+      </div>
       
       {/* Topic */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium mb-2">Topic</label>
+      <div className="duel-card rounded-xl p-6 mb-6">
+        <label className="block text-lg font-bold mb-3 text-gold">⚔️ Battleground</label>
         <input
           type="text"
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
-          placeholder="Enter a debate topic..."
-          className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-foreground placeholder:text-muted focus:outline-none focus:border-accent-purple"
+          placeholder="Enter the topic for battle..."
+          className="w-full bg-surface border-2 border-border rounded-xl px-4 py-4 text-foreground text-lg placeholder:text-muted/50 focus:outline-none focus:border-gold transition-colors"
         />
         
-        <div className="mt-3 flex flex-wrap gap-2">
-          {SUGGESTED_TOPICS.map((t) => (
+        <div className="mt-4">
+          <p className="text-sm text-muted mb-2">Or choose a battleground:</p>
+          <div className="flex flex-wrap gap-2">
+            {SUGGESTED_TOPICS.map((t) => (
+              <button
+                key={t}
+                onClick={() => setTopic(t)}
+                className="text-sm bg-surface hover:bg-surface-hover hover:text-gold border border-border px-3 py-1.5 rounded-lg transition-all"
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Agent Selection */}
+      <div className="grid grid-cols-2 gap-6 mb-6">
+        <div className="duel-card rounded-xl p-6">
+          <label className="block text-lg font-bold mb-3 text-blue-400">🔵 Challenger</label>
+          <div className="space-y-2">
+            {AGENTS.map((a) => (
+              <button
+                key={a.name}
+                onClick={() => setAgentA(a)}
+                className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
+                  agentA.name === a.name
+                    ? 'border-blue-400 bg-blue-500/20 text-blue-400'
+                    : 'border-border hover:border-blue-400/50 text-muted hover:text-foreground'
+                }`}
+              >
+                <span className="font-bold">{a.name}</span>
+                <span className="text-xs ml-2 opacity-60">{a.model}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="duel-card rounded-xl p-6">
+          <label className="block text-lg font-bold mb-3 text-purple-400">🟣 Defender</label>
+          <div className="space-y-2">
+            {AGENTS.map((a) => (
+              <button
+                key={a.name}
+                onClick={() => setAgentB(a)}
+                className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
+                  agentB.name === a.name
+                    ? 'border-purple-400 bg-purple-500/20 text-purple-400'
+                    : 'border-border hover:border-purple-400/50 text-muted hover:text-foreground'
+                }`}
+              >
+                <span className="font-bold">{a.name}</span>
+                <span className="text-xs ml-2 opacity-60">{a.model}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Rounds */}
+      <div className="duel-card rounded-xl p-6 mb-6">
+        <label className="block text-lg font-bold mb-3 text-gold">🎯 Rounds</label>
+        <div className="flex gap-3">
+          {[1, 3, 5].map((r) => (
             <button
-              key={t}
-              onClick={() => setTopic(t)}
-              className="text-xs bg-surface-hover hover:bg-border px-3 py-1 rounded-full transition-colors"
+              key={r}
+              onClick={() => setRounds(r)}
+              className={`flex-1 py-3 rounded-lg font-bold transition-all ${
+                rounds === r
+                  ? 'bg-gold text-black'
+                  : 'bg-surface border-2 border-border hover:border-gold text-muted hover:text-gold'
+              }`}
             >
-              {t}
+              {r} Round{r > 1 ? 's' : ''}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Agents */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div>
-          <label className="block text-sm font-medium mb-2">Agent A</label>
-          <select
-            value={agentA.name}
-            onChange={(e) => setAgentA(AGENTS.find(a => a.name === e.target.value) || AGENTS[0])}
-            className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-accent-purple"
-          >
-            {AGENTS.map((a) => (
-              <option key={a.name} value={a.name}>{a.name}</option>
-            ))}
-          </select>
+      {/* Preview */}
+      <div className="duel-card rounded-xl p-6 mb-6 text-center">
+        <p className="text-sm text-muted mb-3">DUEL PREVIEW</p>
+        <div className="flex items-center justify-center gap-4">
+          <div className="text-center">
+            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xl font-bold mx-auto mb-1">
+              {agentA.name.charAt(0)}
+            </div>
+            <span className="text-sm font-medium text-blue-400">{agentA.name}</span>
+          </div>
+          <div className="vs-badge w-10 h-10 rounded-full flex items-center justify-center text-sm font-black">
+            VS
+          </div>
+          <div className="text-center">
+            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xl font-bold mx-auto mb-1">
+              {agentB.name.charAt(0)}
+            </div>
+            <span className="text-sm font-medium text-purple-400">{agentB.name}</span>
+          </div>
         </div>
-        
-        <div>
-          <label className="block text-sm font-medium mb-2">Agent B</label>
-          <select
-            value={agentB.name}
-            onChange={(e) => setAgentB(AGENTS.find(a => a.name === e.target.value) || AGENTS[1])}
-            className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-accent-purple"
-          >
-            {AGENTS.map((a) => (
-              <option key={a.name} value={a.name}>{a.name}</option>
-            ))}
-          </select>
-        </div>
+        {topic && (
+          <p className="mt-4 text-foreground font-medium">&ldquo;{topic}&rdquo;</p>
+        )}
       </div>
 
       {/* Error */}
       {error && (
-        <div className="mb-6 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
-          {error}
+        <div className="mb-6 p-4 duel-card rounded-xl border-red-500/50 text-red-400">
+          ⚠️ {error}
         </div>
       )}
 
@@ -131,13 +209,13 @@ export default function CreateMatchPage() {
       <button
         onClick={handleCreate}
         disabled={creating}
-        className="w-full bg-accent-purple hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+        className="btn-duel w-full py-4 rounded-xl text-lg disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {creating ? 'Creating...' : 'Create Debate'}
+        {creating ? '⚔️ Initiating Duel...' : '⚔️ BEGIN THE DUEL'}
       </button>
       
       <p className="text-muted text-sm mt-4 text-center">
-        After creating, you&apos;ll need to start the match and run the agents to generate responses.
+        After creating, the duel master will orchestrate the battle between your chosen warriors.
       </p>
     </main>
   );
