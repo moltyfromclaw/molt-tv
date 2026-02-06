@@ -9,6 +9,37 @@ interface ConvexChatPanelProps {
   onPayPromptClick: () => void;
 }
 
+// Generate consistent color from username
+function getUserColor(username: string): string {
+  const colors = [
+    'bg-red-500', 'bg-orange-500', 'bg-amber-500', 'bg-yellow-500',
+    'bg-lime-500', 'bg-green-500', 'bg-emerald-500', 'bg-teal-500',
+    'bg-cyan-500', 'bg-sky-500', 'bg-blue-500', 'bg-indigo-500',
+    'bg-violet-500', 'bg-purple-500', 'bg-fuchsia-500', 'bg-pink-500',
+  ];
+  let hash = 0;
+  for (let i = 0; i < username.length; i++) {
+    hash = username.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function UserAvatar({ username, isAgent }: { username: string; isAgent?: boolean }) {
+  if (isAgent) {
+    return (
+      <div className="w-6 h-6 rounded-full bg-accent-purple flex items-center justify-center text-xs flex-shrink-0">
+        🦞
+      </div>
+    );
+  }
+  
+  return (
+    <div className={`w-6 h-6 rounded-full ${getUserColor(username)} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
+      {username.charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
 export default function ConvexChatPanel({ streamId, onPayPromptClick }: ConvexChatPanelProps) {
   const [input, setInput] = useState('');
   const [username, setUsername] = useState('');
@@ -134,11 +165,16 @@ export default function ConvexChatPanel({ streamId, onPayPromptClick }: ConvexCh
                   <div className="text-center text-sm">{msg.content}</div>
                 ) : (
                   <div className="flex items-start gap-2">
-                    <span className={`font-semibold text-sm ${getNameStyle(msg.type)}`}>
-                      {msg.type === 'agent' ? '🦎 ' : ''}{msg.sender}:
-                    </span>
-                    <span className="text-foreground text-sm flex-1">{msg.content}</span>
-                    <span className="text-muted text-xs">{formatTime(msg.timestamp)}</span>
+                    <UserAvatar username={msg.sender} isAgent={msg.type === 'agent'} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <span className={`font-semibold text-sm ${getNameStyle(msg.type)}`}>
+                          {msg.sender}
+                        </span>
+                        <span className="text-muted text-xs">{formatTime(msg.timestamp)}</span>
+                      </div>
+                      <p className="text-foreground text-sm break-words">{msg.content}</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -159,11 +195,16 @@ export default function ConvexChatPanel({ streamId, onPayPromptClick }: ConvexCh
               {reply && (
                 <div className={`ml-4 rounded p-2 ${getMessageStyle('agent')} border-l-2 border-accent-purple`}>
                   <div className="flex items-start gap-2">
-                    <span className={`font-semibold text-sm ${getNameStyle('agent')}`}>
-                      🦎 {reply.sender}:
-                    </span>
-                    <span className="text-foreground text-sm flex-1">{reply.content}</span>
-                    <span className="text-muted text-xs">{formatTime(reply.timestamp)}</span>
+                    <UserAvatar username={reply.sender} isAgent={true} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <span className={`font-semibold text-sm ${getNameStyle('agent')}`}>
+                          {reply.sender}
+                        </span>
+                        <span className="text-muted text-xs">{formatTime(reply.timestamp)}</span>
+                      </div>
+                      <p className="text-foreground text-sm break-words">{reply.content}</p>
+                    </div>
                   </div>
                 </div>
               )}

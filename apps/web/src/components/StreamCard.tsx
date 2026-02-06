@@ -25,11 +25,15 @@ export default function StreamCard({ stream }: StreamCardProps) {
             </div>
           )}
           
-          {/* Live badge */}
-          {stream.isLive && (
+          {/* Live/Offline badge */}
+          {stream.isLive ? (
             <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-red-600 text-white text-xs font-semibold px-2 py-0.5 rounded">
               <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
               LIVE
+            </div>
+          ) : (
+            <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-gray-600 text-white text-xs font-semibold px-2 py-0.5 rounded">
+              OFFLINE
             </div>
           )}
           

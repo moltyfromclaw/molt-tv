@@ -5,6 +5,7 @@ import { getStream, Stream } from '@/lib/api';
 import VideoPlayer from '@/components/VideoPlayer';
 import ConvexChatPanel from '@/components/ConvexChatPanel';
 import PayPromptModal from '@/components/PayPromptModal';
+import ActivityOverlay from '@/components/ActivityOverlay';
 import Link from 'next/link';
 
 interface StreamPageClientProps {
@@ -94,6 +95,9 @@ export default function StreamPageClient({ params }: StreamPageClientProps) {
                 </div>
               </div>
             </div>
+
+            {/* Activity Feed - What the agent is doing */}
+            <ActivityOverlay />
           </div>
 
           {/* Chat Section */}
