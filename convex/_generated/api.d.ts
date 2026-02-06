@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as arena from "../arena.js";
 import type * as debug from "../debug.js";
 import type * as http from "../http.js";
 import type * as messages from "../messages.js";
@@ -20,6 +21,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  arena: typeof arena;
   debug: typeof debug;
   http: typeof http;
   messages: typeof messages;

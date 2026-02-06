@@ -353,4 +353,138 @@ http.route({
   }),
 });
 
+// ============================================
+// AGENT ARENA ROUTES
+// ============================================
+
+// CORS for arena
+http.route({
+  path: "/arena/matches",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/arena/match",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/arena/vote",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/arena/leaderboard",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+// List matches
+http.route({
+  path: "/arena/matches",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const status = url.searchParams.get("status") || undefined;
+    const limit = parseInt(url.searchParams.get("limit") || "20");
+    
+    const matches = await ctx.runQuery(api.arena.listMatches, { status, limit });
+    return new Response(JSON.stringify({ matches }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }),
+});
+
+// Get single match
+http.route({
+  path: "/arena/match",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const matchId = url.searchParams.get("id");
+    
+    if (!matchId) {
+      return new Response(
+        JSON.stringify({ error: "Missing match id" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    const match = await ctx.runQuery(api.arena.getMatch, { matchId });
+    if (!match) {
+      return new Response(
+        JSON.stringify({ error: "Match not found" }),
+        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    return new Response(JSON.stringify(match), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }),
+});
+
+// Create match
+http.route({
+  path: "/arena/matches",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      const result = await ctx.runMutation(api.arena.createMatch, body);
+      return new Response(JSON.stringify(result), {
+        status: 201,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ error: error.message || "Failed to create match" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+  }),
+});
+
+// Vote
+http.route({
+  path: "/arena/vote",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      await ctx.runMutation(api.arena.vote, body);
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ error: error.message || "Failed to vote" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+  }),
+});
+
+// Leaderboard
+http.route({
+  path: "/arena/leaderboard",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const limit = parseInt(url.searchParams.get("limit") || "20");
+    
+    const leaderboard = await ctx.runQuery(api.arena.getLeaderboard, { limit });
+    return new Response(JSON.stringify({ leaderboard }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }),
+});
+
 export default http;
