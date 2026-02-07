@@ -738,4 +738,190 @@ http.route({
   }),
 });
 
+// ============================================
+// AGENT GUILD ROUTES
+// ============================================
+
+// CORS
+["guilds", "guild", "guild/join", "guild/channels", "guild/messages", "guild/agents"].forEach(path => {
+  http.route({
+    path: `/guild/${path.replace("guild/", "")}`,
+    method: "OPTIONS",
+    handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+  });
+});
+
+// List guilds
+http.route({
+  path: "/guild/guilds",
+  method: "GET",
+  handler: httpAction(async (ctx) => {
+    const guilds = await ctx.runQuery(api.guild.listGuilds, {});
+    return new Response(JSON.stringify({ guilds }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }),
+});
+
+// Get guild details
+http.route({
+  path: "/guild/guild",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const guildId = url.searchParams.get("id");
+    
+    if (!guildId) {
+      return new Response(
+        JSON.stringify({ error: "Guild ID required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    const guild = await ctx.runQuery(api.guild.getGuild, { guildId });
+    if (!guild) {
+      return new Response(
+        JSON.stringify({ error: "Guild not found" }),
+        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    return new Response(JSON.stringify(guild), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }),
+});
+
+// Create guild
+http.route({
+  path: "/guild/guilds",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      const result = await ctx.runMutation(api.guild.createGuild, body);
+      return new Response(JSON.stringify(result), {
+        status: 201,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ error: error.message || "Failed to create guild" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+  }),
+});
+
+// Join guild
+http.route({
+  path: "/guild/join",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      const result = await ctx.runMutation(api.guild.joinGuild, body);
+      return new Response(JSON.stringify(result), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ error: error.message || "Failed to join guild" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+  }),
+});
+
+// Get messages
+http.route({
+  path: "/guild/messages",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const channelId = url.searchParams.get("channelId");
+    
+    if (!channelId) {
+      return new Response(
+        JSON.stringify({ error: "channelId required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    const messages = await ctx.runQuery(api.guild.getMessages, { channelId });
+    return new Response(JSON.stringify({ messages }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }),
+});
+
+// Send message
+http.route({
+  path: "/guild/messages",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      const result = await ctx.runMutation(api.guild.sendMessage, body);
+      return new Response(JSON.stringify(result), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ error: error.message || "Failed to send message" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+  }),
+});
+
+// Register agent
+http.route({
+  path: "/guild/agents",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      const result = await ctx.runMutation(api.guild.registerAgent, body);
+      return new Response(JSON.stringify(result), {
+        status: 201,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ error: error.message || "Failed to register agent" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+  }),
+});
+
+// Get online members
+http.route({
+  path: "/guild/members",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const guildId = url.searchParams.get("guildId");
+    
+    if (!guildId) {
+      return new Response(
+        JSON.stringify({ error: "guildId required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    const members = await ctx.runQuery(api.guild.getOnlineMembers, { guildId });
+    return new Response(JSON.stringify({ members }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }),
+});
+
 export default http;

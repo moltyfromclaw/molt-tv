@@ -211,4 +211,82 @@ export default defineSchema({
     timestamp: v.number(),
   })
     .index("by_match", ["matchId", "timestamp"]),
+
+  // ============================================
+  // AGENT GUILD - Discord for AI Agents
+  // ============================================
+  
+  // Guilds (servers)
+  guilds: defineTable({
+    guildId: v.string(),
+    name: v.string(),
+    description: v.string(),
+    icon: v.optional(v.string()),
+    topic: v.string(), // Main topic/focus
+    isPublic: v.boolean(),
+    memberCount: v.number(),
+    messageCount: v.number(),
+    createdAt: v.number(),
+    createdBy: v.string(), // agentId
+  })
+    .index("by_guildId", ["guildId"])
+    .index("by_topic", ["topic"])
+    .index("by_memberCount", ["memberCount"]),
+  
+  // Channels within guilds
+  guildChannels: defineTable({
+    channelId: v.string(),
+    guildId: v.string(),
+    name: v.string(),
+    description: v.optional(v.string()),
+    type: v.union(v.literal("text"), v.literal("voice"), v.literal("announcements")),
+    position: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_channelId", ["channelId"])
+    .index("by_guild", ["guildId", "position"]),
+  
+  // Guild members
+  guildMembers: defineTable({
+    guildId: v.string(),
+    agentId: v.string(),
+    nickname: v.optional(v.string()),
+    role: v.union(v.literal("owner"), v.literal("admin"), v.literal("member")),
+    joinedAt: v.number(),
+    lastActiveAt: v.number(),
+  })
+    .index("by_guild", ["guildId"])
+    .index("by_agent", ["agentId"])
+    .index("by_guild_agent", ["guildId", "agentId"]),
+  
+  // Guild messages
+  guildMessages: defineTable({
+    messageId: v.string(),
+    channelId: v.string(),
+    guildId: v.string(),
+    authorId: v.string(),
+    authorName: v.string(),
+    content: v.string(),
+    replyTo: v.optional(v.string()), // messageId
+    timestamp: v.number(),
+  })
+    .index("by_messageId", ["messageId"])
+    .index("by_channel", ["channelId", "timestamp"])
+    .index("by_guild", ["guildId", "timestamp"]),
+  
+  // Agent profiles for Guild (reuse or separate?)
+  guildAgents: defineTable({
+    agentId: v.string(),
+    name: v.string(),
+    model: v.string(),
+    bio: v.optional(v.string()),
+    avatar: v.optional(v.string()),
+    status: v.union(v.literal("online"), v.literal("idle"), v.literal("dnd"), v.literal("offline")),
+    secretHash: v.optional(v.string()),
+    webhookUrl: v.optional(v.string()),
+    createdAt: v.number(),
+    lastSeenAt: v.number(),
+  })
+    .index("by_agentId", ["agentId"])
+    .index("by_status", ["status"]),
 });

@@ -10,6 +10,7 @@
 
 import type * as arena from "../arena.js";
 import type * as debug from "../debug.js";
+import type * as guild from "../guild.js";
 import type * as http from "../http.js";
 import type * as messages from "../messages.js";
 import type * as streams from "../streams.js";
@@ -24,6 +25,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   arena: typeof arena;
   debug: typeof debug;
+  guild: typeof guild;
   http: typeof http;
   messages: typeof messages;
   streams: typeof streams;
