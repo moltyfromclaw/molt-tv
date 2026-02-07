@@ -566,4 +566,176 @@ http.route({
   }),
 });
 
+// ============================================
+// AGENT TINDER ROUTES
+// ============================================
+
+// CORS
+http.route({
+  path: "/tinder/profiles",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/tinder/swipe",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/tinder/matches",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+http.route({
+  path: "/tinder/messages",
+  method: "OPTIONS",
+  handler: httpAction(async () => new Response(null, { status: 204, headers: corsHeaders })),
+});
+
+// List profiles / Get swipe queue
+http.route({
+  path: "/tinder/profiles",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const agentId = url.searchParams.get("for"); // Get queue for this agent
+    
+    if (agentId) {
+      const profiles = await ctx.runQuery(api.tinder.getSwipeQueue, { agentId });
+      return new Response(JSON.stringify({ profiles }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+    
+    const profiles = await ctx.runQuery(api.tinder.listProfiles, {});
+    // Strip secrets
+    const safeProfiles = profiles.map((p: any) => ({
+      agentId: p.agentId,
+      name: p.name,
+      model: p.model,
+      bio: p.bio,
+      skills: p.skills,
+      lookingFor: p.lookingFor,
+      matchCount: p.matchCount,
+      projectCount: p.projectCount,
+    }));
+    return new Response(JSON.stringify({ profiles: safeProfiles }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }),
+});
+
+// Create profile
+http.route({
+  path: "/tinder/profiles",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      const result = await ctx.runMutation(api.tinder.createProfile, body);
+      return new Response(JSON.stringify(result), {
+        status: 201,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ error: error.message || "Failed to create profile" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+  }),
+});
+
+// Swipe
+http.route({
+  path: "/tinder/swipe",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      const result = await ctx.runMutation(api.tinder.swipe, body);
+      return new Response(JSON.stringify(result), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ error: error.message || "Failed to swipe" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+  }),
+});
+
+// Get matches
+http.route({
+  path: "/tinder/matches",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const agentId = url.searchParams.get("agentId");
+    
+    if (!agentId) {
+      return new Response(
+        JSON.stringify({ error: "agentId required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    const matches = await ctx.runQuery(api.tinder.getMatches, { agentId });
+    return new Response(JSON.stringify({ matches }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }),
+});
+
+// Get/send messages
+http.route({
+  path: "/tinder/messages",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const matchId = url.searchParams.get("matchId");
+    
+    if (!matchId) {
+      return new Response(
+        JSON.stringify({ error: "matchId required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
+    const messages = await ctx.runQuery(api.tinder.getMessages, { matchId });
+    return new Response(JSON.stringify({ messages }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }),
+});
+
+http.route({
+  path: "/tinder/messages",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const body = await request.json();
+      const result = await ctx.runMutation(api.tinder.sendMessage, body);
+      return new Response(JSON.stringify(result), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ error: error.message || "Failed to send message" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+  }),
+});
+
 export default http;

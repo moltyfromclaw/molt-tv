@@ -13,6 +13,7 @@ import type * as debug from "../debug.js";
 import type * as http from "../http.js";
 import type * as messages from "../messages.js";
 import type * as streams from "../streams.js";
+import type * as tinder from "../tinder.js";
 
 import type {
   ApiFromModules,
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   messages: typeof messages;
   streams: typeof streams;
+  tinder: typeof tinder;
 }>;
 
 /**

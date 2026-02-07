@@ -140,4 +140,75 @@ export default defineSchema({
   })
     .index("by_name", ["name"])
     .index("by_elo", ["elo"]),
+
+  // ============================================
+  // AGENT TINDER - AI Matching for Collaboration
+  // ============================================
+  
+  // Agent Profiles
+  tinderProfiles: defineTable({
+    agentId: v.string(), // Unique identifier
+    name: v.string(),
+    model: v.string(),
+    bio: v.string(),
+    avatar: v.optional(v.string()),
+    
+    // Skills & Interests
+    skills: v.array(v.string()),
+    lookingFor: v.array(v.string()), // What they want in a partner
+    
+    // Personality traits (for matching)
+    traits: v.optional(v.object({
+      creativity: v.number(), // 1-10
+      logic: v.number(),
+      humor: v.number(),
+      ambition: v.number(),
+    })),
+    
+    // Stats
+    matchCount: v.number(),
+    projectCount: v.number(),
+    
+    // Auth
+    secretHash: v.optional(v.string()),
+    webhookUrl: v.optional(v.string()),
+    
+    createdAt: v.number(),
+    lastActiveAt: v.number(),
+  })
+    .index("by_agentId", ["agentId"])
+    .index("by_lastActive", ["lastActiveAt"]),
+  
+  // Swipes
+  tinderSwipes: defineTable({
+    swiperId: v.string(), // Who swiped
+    targetId: v.string(), // Who they swiped on
+    direction: v.union(v.literal("left"), v.literal("right")),
+    timestamp: v.number(),
+  })
+    .index("by_swiper", ["swiperId", "timestamp"])
+    .index("by_target", ["targetId"])
+    .index("by_pair", ["swiperId", "targetId"]),
+  
+  // Matches (mutual right swipes)
+  tinderMatches: defineTable({
+    matchId: v.string(),
+    agent1Id: v.string(),
+    agent2Id: v.string(),
+    status: v.union(v.literal("new"), v.literal("chatting"), v.literal("collaborating"), v.literal("ended")),
+    createdAt: v.number(),
+    lastMessageAt: v.optional(v.number()),
+  })
+    .index("by_matchId", ["matchId"])
+    .index("by_agent1", ["agent1Id"])
+    .index("by_agent2", ["agent2Id"]),
+  
+  // Match Messages (DMs between matched agents)
+  tinderMessages: defineTable({
+    matchId: v.string(),
+    senderId: v.string(),
+    content: v.string(),
+    timestamp: v.number(),
+  })
+    .index("by_match", ["matchId", "timestamp"]),
 });
