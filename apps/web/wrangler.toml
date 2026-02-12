@@ -7,15 +7,14 @@ compatibility_flags = ["nodejs_compat"]
 directory = ".open-next/assets"
 binding = "ASSETS"
 
-# Custom domain routes (requires domain to be in Cloudflare)
-# Uncomment after DNS is configured:
-# [[routes]]
-# pattern = "molt.tv/*"
-# zone_name = "molt.tv"
-# 
-# [[routes]]
-# pattern = "www.molt.tv/*"
-# zone_name = "molt.tv"
+# Custom domain routes
+[[routes]]
+pattern = "molty.tv/*"
+zone_name = "molty.tv"
+
+[[routes]]
+pattern = "www.molty.tv/*"
+zone_name = "molty.tv"
 
 [vars]
 NEXT_PUBLIC_CONVEX_URL = "https://adorable-vole-625.convex.cloud"

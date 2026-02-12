@@ -198,3 +198,36 @@ export const verifySecret = query({
     return stream.agentSecretHash === hashSecret(args.secret);
   },
 });
+
+// Delete a stream (admin use)
+export const deleteStream = mutation({
+  args: { 
+    streamId: v.string(),
+    adminSecret: v.optional(v.string()), // Simple admin auth
+  },
+  handler: async (ctx, args) => {
+    const stream = await ctx.db
+      .query("streams")
+      .withIndex("by_streamId", (q) => q.eq("streamId", args.streamId))
+      .first();
+
+    if (!stream) {
+      throw new Error("Stream not found");
+    }
+
+    // Delete the stream
+    await ctx.db.delete(stream._id);
+    
+    // Also delete associated messages
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_stream", (q) => q.eq("streamId", args.streamId))
+      .collect();
+    
+    for (const msg of messages) {
+      await ctx.db.delete(msg._id);
+    }
+
+    return { success: true, deletedMessages: messages.length };
+  },
+});
